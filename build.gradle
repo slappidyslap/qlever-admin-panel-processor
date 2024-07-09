@@ -17,7 +17,7 @@ dependencies {
     testImplementation 'org.slf4j:slf4j-simple:2.0.13'
 
     // Selenium Java binding
-    implementation 'org.seleniumhq.selenium:selenium-java:4.21.0'
+    implementation 'org.seleniumhq.selenium:selenium-java:4.22.0'
     // WebDriverManager to manage browser drivers
     implementation 'io.github.bonigarcia:webdrivermanager:5.8.0'
 
