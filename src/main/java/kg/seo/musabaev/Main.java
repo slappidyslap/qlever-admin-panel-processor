@@ -35,11 +35,12 @@ import static java.util.Collections.singletonList;
 
 public class Main {
 
-    final static int offset = 1; // offset в стиле программирование, то есть -1
-    final static String subdomain = "tj";
-    final static String defaultSheetName = "Магазин";
-    final static String range = defaultSheetName + "!A:D";
-    final static String spreadsheetId = "1pxqSkr73w5fx1QQKZwPIKYgFcQREvafftZ5pK-rdf_I";
+    final static int offset = 2;
+    final static String subdomain = "kg";
+    final static String defaultSheetName = "Лист1";
+    final static String range = defaultSheetName + "!A:C";
+    final static String spreadsheetId = "1y2uZu1K5tSnZ_oIn24qsmuywmTss4WVWtQ8w8r0MNWw";
+    final static String statusCell = "F";
 
     // TODO когда тип статьи меняют, тоже надо менять
     // исправит ошибку когда уникальность нарушается
@@ -69,54 +70,61 @@ public class Main {
                 final String[] segments = ((String) values.get(i).get(0)).split("/");
                 final int articleId = parseInt(segments[segments.length - 1]);
                 final String url = QLEVER_BASE_URL + articleId;
-                final String transliterated = (String) values.get(i).get(2);
-                if (transliterated.contains("error")) {
+                final String metaTitle = (String) values.get(i).get(1);
+                final String metaDesc = (String) values.get(i).get(2);
+                if (metaTitle.contains("error") || metaDesc.contains("error")) {
                     ValueRange body = new ValueRange().setValues(singletonList(singletonList("Не обновлен")));
                     sheets.spreadsheets().values()
-                            .update(spreadsheetId, defaultSheetName + "!D" + (i + 1), body)
+                            .update(spreadsheetId, defaultSheetName + ("!" + statusCell) + (i + 1), body)
                             .setValueInputOption("RAW")
                             .execute();
                     continue;
                 }
 
                 web.get(url);
-                WebElement element;
-                String selector1 = "product_urlName";
+                WebElement element1;
+                WebElement element2;
+                String selector1 = "article_metaTitle_ru";
+                String selector2 = "article_metaDescription_ru";
                 if (i == offset) {
                     WebDriverWait wait = new WebDriverWait(web, Duration.ofMinutes(5));
-                    element = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.id(selector1))).get(0); // FIXME
+                    element1 = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.id(selector1))).get(0);
+                    element2 = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.id(selector2))).get(0);
                 } else {
                     try {
                         WebDriverWait wait = new WebDriverWait(web, Duration.ofSeconds(5));
-                        element = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.id(selector1))).get(0); // FIXME
+                        element1 = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.id(selector1))).get(0);
+                        element2 = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.id(selector2))).get(0);
                     } catch (TimeoutException e) {
                         ValueRange body = new ValueRange().setValues(singletonList(singletonList("Не обновлен")));
                         sheets.spreadsheets().values()
-                                .update(spreadsheetId, defaultSheetName + "!D" + (i + 1), body)
+                                .update(spreadsheetId, defaultSheetName + ("!" + statusCell) + (i + 1), body)
                                 .setValueInputOption("RAW")
                                 .execute();
                         continue;
                     }
                 }
-                element.clear();
-                element.sendKeys(transliterated);
+                element1.clear();
+                element2.clear();
+                element1.sendKeys(metaTitle);
+                element2.sendKeys(metaDesc);
 //                sleep(300);
-                web.findElement(By.cssSelector("[data-target='#modal-publish-new-product']")).click(); // FIXME
+                web.findElement(By.cssSelector("[data-target='#modal-publish-article']")).click(); // FIXME
                 sleep(300);
-                web.findElement(By.id("product-submit")).click(); // FIXME
+                web.findElement(By.id("article-submit")).click(); // FIXME
 
                 try {
-                    WebDriverWait wait = new WebDriverWait(web, Duration.ofSeconds(2));
-                    element = wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//h3[@class='modals-text_title' and text()='Ошибка']"))).get(0);
+                    WebDriverWait wait = new WebDriverWait(web, Duration.ofSeconds(3));
+                    wait.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//h3[@class='modals-text_title' and text()='Ошибка']"))).get(0);
                     ValueRange body = new ValueRange().setValues(singletonList(singletonList("Не обновлен")));
                     sheets.spreadsheets().values()
-                            .update(spreadsheetId, defaultSheetName + "!D" + (i + 1), body)
+                            .update(spreadsheetId, defaultSheetName + ("!" + statusCell) + (i + 1), body)
                             .setValueInputOption("RAW")
                             .execute();
                 } catch (Exception $) {
                     ValueRange body = new ValueRange().setValues(singletonList(singletonList("Обновлен")));
                     sheets.spreadsheets().values()
-                            .update(spreadsheetId, defaultSheetName + "!D" + (i + 1), body)
+                            .update(spreadsheetId, defaultSheetName + ("!" + statusCell) + (i + 1), body)
                             .setValueInputOption("RAW")
                             .execute();
                 }
